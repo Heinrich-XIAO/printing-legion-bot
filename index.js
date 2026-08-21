@@ -100,13 +100,20 @@ app.event("message", async ({ event }) => {
     const time = endms - startms;
     const parsedJSON = JSON.parse(response.choices[0].message.content);
     if (parsedJSON.valid) {
+      // Check for duplicates w/ git_url
+      const duplicate = db.data.submissions.find(submission => submission.git_url === parsedJSON.git_url);
+      if (duplicate) {
+        console.log(`Duplicate submission found for git_url: ${parsedJSON.git_url} in ${time}ms`);
+        return;
+      }
       db.data.submissions.push(parsedJSON);
       await db.write();
       console.log(`Submission parsed and added to database in ${time}ms`);
+      return
     } else {
       console.log(`Invalid submission: ${JSON.stringify(parsedJSON)} in ${time}ms`);
+      return
     }
-    return
   }
   console.log(event);
 });
