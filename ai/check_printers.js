@@ -18,6 +18,7 @@ export const checkPrinters = async (submission) => {
   const retried_promises = responses.map(async response => {
     const answer = response.choices[0].message.content.trim().toLowerCase();
     if (answer !== "yes" && answer !== "no") {
+      const region = regions[responses.indexOf(response)];
       const response = await client.chat.send({
         chatRequest: {
           model: MODEL,

@@ -1,4 +1,5 @@
 import { client, MODEL } from "./client.js";
+import { SYSTEM_PROMPT } from "../prompts/submission.js";
 
 export const parseInfo = async (text) => {
   return await client.chat.send({

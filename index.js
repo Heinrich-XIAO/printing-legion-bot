@@ -1,7 +1,5 @@
 import { App } from "@slack/bolt";
 import { config } from "dotenv";
-import { OpenRouter } from "@openrouter/sdk";
-import { SYSTEM_PROMPT } from "./prompts/submission.js";
 import { db } from "./db/database.js";
 import { parseInfo } from "./ai/parser.js";
 import { checkPrinters } from "./ai/check_printers.js";
