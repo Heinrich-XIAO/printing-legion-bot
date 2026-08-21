@@ -4,16 +4,13 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "bun run --watch index.ts"
-  },
-  "devDependencies": {
-    "@types/bun": "latest"
-  },
-  "peerDependencies": {
-    "typescript": "^5"
+    "dev": "nodemon --watch . --ext ts --exec ts-node index.ts",
   },
   "dependencies": {
     "@slack/bolt": "^5.0.0",
     "dotenv": "^17.4.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
   }
 }
