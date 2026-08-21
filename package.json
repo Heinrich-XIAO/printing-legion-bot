@@ -1,0 +1,16 @@
+{
+  "name": "printing-legion-bot",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@slack/bolt": "^5.0.0",
+    "dotenv": "^17.4.2"
+  }
+}
