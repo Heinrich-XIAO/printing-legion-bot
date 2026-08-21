@@ -12,5 +12,5 @@ const app = new App({
 
 (async () => {
   await app.start();
-  console.log("functionable :skulk:");
+  console.log("started");
 })();
