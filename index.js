@@ -64,7 +64,7 @@ Rules:
 - Never invent, assume, or fabricate information.
 - Do not infer missing information from general knowledge.
 - Only extract information explicitly stated or unambiguously provided in the user's message.
-- Do not infer a state/province from a city. If the message only provides a city and not its state/province, consider the location incomplete.
+- When possible, infer a state/province from a city.
 - Only extract the general geographic area: state/province and country. Never output an exact address, postal code, street, or other precise location.
 - \`git_url\` must be an actual repository URL present in the message. Do not construct one from a project name.
 - Preserve the project's name as written, while removing obvious surrounding formatting if appropriate.
@@ -92,6 +92,47 @@ const parseInfo = async (text) => {
   });
 };
 
+const checkPrinters = async (submission) => {
+  // batch request with openrouter to ask ai if the regions are close.
+  const regions = db.data.printers.map(printer => printer.region);
+  const promises = regions.map(region => {
+    return client.chat.send({
+      chatRequest: {
+        model: "stealth/ox-alpha",
+        messages: [
+          { role: "user", content: `Is the region "${region}" close to the region "${submission.location.state_province}, ${submission.location.country}"? Answer with "yes" or "no".` }
+        ],
+        stream: false,
+      }
+    });
+  });
+  const responses = await Promise.all(promises);
+  const booleans = responses.map(async response => {
+    const answer = response.choices[0].message.content.trim().toLowerCase();
+    if (answer !== "yes" && answer !== "no") {
+      const response = await client.chat.send({
+        chatRequest: {
+          model: "stealth/ox-alpha",
+          messages: [
+            { role: "user", content: `The previous answer was "${answer}". Please answer with "yes" or "no". Is the region "${region}" close to the region "${submission.location.state_province}, ${submission.location.country}"?` }
+          ],
+          stream: false,
+        }
+      });
+      const newAnswer = response.choices[0].message.content.trim().toLowerCase();
+      if (newAnswer !== "yes" && newAnswer !== "no") {
+        console.log(`Invalid response from AI: ${newAnswer}. Assuming "no".`);
+        return false;
+      }
+      return newAnswer === "yes";
+    }
+    return answer === "yes";
+  });
+  const closePrinters = db.data.printers.filter((printer, index) => booleans[index]);
+  const printerUserIds = closePrinters.map(printer => printer.user_id);
+  return printerUserIds;  
+};
+
 app.command("/add-me-as-printer", async ({ command, ack, respond }) => {
   const start = Date.now();
   console.log(command);
@@ -100,7 +141,7 @@ app.command("/add-me-as-printer", async ({ command, ack, respond }) => {
   if (!existingPrinter) {
     db.data.printers.push({ user_id: command.user_id, region: command.text });
     await db.write();
-    console.log(`Added ${command.user_name} as a printer.`);
+    console.log(`Added ${command.user_id} as a printer.`);
   } else {
     await respond({ text: `You are already registered as a printer.` });
   }
@@ -125,6 +166,15 @@ app.event("message", async ({ event }) => {
       db.data.submissions.push(parsedJSON);
       await db.write();
       console.log(`Submission parsed and added to database in ${time}ms`);
+      const printers = await checkPrinters(parsedJSON);
+      if (printers.length > 0) {
+        const pingText = printers.map(user_id => `<@${user_id}>`).join(" ");
+        await app.client.chat.postMessage({
+          channel: event.channel,
+          thread_ts: event.ts,
+          text: `These printers have may be suitable to print as they are close to the location: ${pingText}`,
+        });
+      }
       return
     } else {
       console.log(`Invalid submission: ${JSON.stringify(parsedJSON)} in ${time}ms`);
