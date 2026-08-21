@@ -1,0 +1,2 @@
+# Printing Legion Bot
+Printing Legion is a slack channel on the Hack Club slack where people w/ printers for people w/o printers. As a slack channel it is not organized, making it difficult for printers to know whether or not a print is important without reading it. As a result, there is a crisis of printers turning on pings for all messages in the channel. This bot aims to solve that by pinginging the printer only when it makes sense.
