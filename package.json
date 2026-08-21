@@ -4,7 +4,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "nodemon --watch . --ext ts --exec ts-node index.ts",
+    "dev": "nodemon --watch . --ext ts --exec ts-node index.ts"
   },
   "dependencies": {
     "@slack/bolt": "^5.0.0",
