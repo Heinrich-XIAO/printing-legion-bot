@@ -1,6 +1,7 @@
 import { App } from "@slack/bolt";
 import { config } from "dotenv";
 import { OpenRouter } from "@openrouter/sdk";
+import { JSONFilePreset } from 'lowdb/node';
 
 config();
 
@@ -14,6 +15,11 @@ const client = new OpenRouter({
   apiKey: process.env.HACKCLUB_API_KEY,
   serverURL: "https://ai.hackclub.com/proxy/v1",
 });
+
+const defaultData = {
+  submissions: [],
+};
+const db = await JSONFilePreset("db.json", defaultData);
 
 const SYSTEM_PROMPT = `
 You are a strict information-extraction system for processing messages submitted in a channel.
@@ -89,15 +95,16 @@ const parseInfo = async (text) => {
 app.event("message", async ({ event }) => {
   if (event.type == "message" && event.subtype == undefined) {
     const startms = process.hrtime.bigint()/1000000n;
-    const response = await parseInfo(event.text);
-    
+    const response = await parseInfo(event.text);    
     const endms = process.hrtime.bigint()/1000000n;
     const time = endms - startms;
-
-    await app.client.chat.postMessage({
-      channel: event.channel,
-      text: `Response time: ${time} ms\n\n${response.choices[0].message.content}`,
-    });
+    const parsedJSON = JSON.parse(response.choices[0].message.content);
+    if (parsedJSON.valid) {
+      await db.set("submissions", [...db.get("submissions"), parsedJSON]);
+      console.log(`Submission parsed and added to database in ${time}ms`);
+    } else {
+      console.log(`Invalid submission: ${JSON.stringify(parsedJSON)} in ${time}ms`);
+    }
     return
   }
   console.log(event);
