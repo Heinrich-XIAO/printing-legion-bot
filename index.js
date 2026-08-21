@@ -10,6 +10,14 @@ const app = new App({
 });
 
 app.event("message", async ({ event }) => {
+  if (event.type == "message" && event.subtype == undefined) {
+    
+    await app.client.chat.postMessage({
+      channel: event.channel,
+      text: `Hello <@${event.user}>!`,
+    });
+    return
+  }
   console.log(event);
 });
 
