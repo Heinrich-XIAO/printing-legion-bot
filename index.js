@@ -100,7 +100,8 @@ app.event("message", async ({ event }) => {
     const time = endms - startms;
     const parsedJSON = JSON.parse(response.choices[0].message.content);
     if (parsedJSON.valid) {
-      await db.set("submissions", [...db.get("submissions"), parsedJSON]);
+      db.data.submissions.push(parsedJSON);
+      await db.write();
       console.log(`Submission parsed and added to database in ${time}ms`);
     } else {
       console.log(`Invalid submission: ${JSON.stringify(parsedJSON)} in ${time}ms`);
