@@ -18,6 +18,7 @@ const client = new OpenRouter({
 
 const defaultData = {
   submissions: [],
+  printers: [],
 };
 const db = await JSONFilePreset("db.json", defaultData);
 
@@ -91,6 +92,21 @@ const parseInfo = async (text) => {
   });
 };
 
+app.command("/add-me-as-printer", async ({ command, ack, respond }) => {
+  const start = Date.now();
+  console.log(command);
+  await ack();
+  const existingPrinter = db.data.printers.find(printer => printer.user_id === command.user_id);
+  if (!existingPrinter) {
+    db.data.printers.push({ user_id: command.user_id, region: command.text });
+    await db.write();
+    console.log(`Added ${command.user_name} as a printer.`);
+  } else {
+    await respond({ text: `You are already registered as a printer.` });
+  }
+  const latency = Date.now() - start;
+  await respond({ text: `Pong!\nLatency: ${latency}ms` });
+});
 
 app.event("message", async ({ event }) => {
   if (event.type == "message" && event.subtype == undefined) {
