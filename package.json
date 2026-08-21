@@ -1,10 +1,10 @@
 {
   "name": "printing-legion-bot",
-  "module": "index.ts",
+  "module": "index.js",
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "nodemon --watch . --ext ts --exec ts-node index.ts"
+    "dev": "nodemon --watch . --ext js --exec node index.js"
   },
   "dependencies": {
     "@slack/bolt": "^5.0.0",
