@@ -17,15 +17,31 @@ app.command("/add-me-as-printer", async ({ command, ack, respond }) => {
   console.log(command);
   await ack();
   const existingPrinter = db.data.printers.find(printer => printer.user_id === command.user_id);
-  if (!existingPrinter) {
-    db.data.printers.push({ user_id: command.user_id, region: command.text });
-    await db.write();
-    console.log(`Added ${command.user_id} as a printer.`);
-  } else {
-    await respond({ text: `You are already registered as a printer.` });
-  }
+  db.data.printers.push({ user_id: command.user_id, region: command.text });
+  await db.write();
+  console.log(`Added ${command.user_id} as a printer.`);
   const latency = Date.now() - start;
-  await respond({ text: `Pong!\nLatency: ${latency}ms` });
+  const text = existingPrinter ? `Updated your printer region to "${command.text}".\nLatency: ${latency}ms` : `Added you as a printer with region "${command.text}".
+Run again to update region.
+Run \`/update-filament-stock\` to update your filament stock.\n
+Latency: ${latency}ms`;
+  await respond({ text });
+});
+
+app.command("/update-filament-stock", async ({ command, ack, respond }) => {
+  const start = Date.now();
+  console.log(command);
+  await ack();
+  const existingPrinter = db.data.printers.find(printer => printer.user_id === command.user_id);
+  if (!existingPrinter) {
+    await respond({ text: "You are not registered as a printer. Use /add-me-as-printer to register." });
+    return;
+  }
+  existingPrinter.filament_stock = command.text;
+  await db.write();
+  console.log(`Updated ${command.user_id}'s filament stock to "${command.text}".`);
+  const latency = Date.now() - start;
+  await respond({ text: `Updated your filament stock to "${command.text}".\nLatency: ${latency}ms` });
 });
 
 app.event("message", async ({ event }) => {
@@ -48,7 +64,8 @@ app.event("message", async ({ event }) => {
       console.log(`Submission parsed and added to database in ${time}ms`);
       const printers = await checkPrinters(parsedJSON);
       if (printers.length > 0) {
-        const pingText = printers.map(user_id => `<@${user_id}>`).join(" ");
+        const printer = db.data.printers.find(printer => printer.user_id === printers[0]);
+        const pingText = printers.map(user_id => `<@${user_id}> (${printer.filament_stock})`).join(" ");
         await app.client.chat.postMessage({
           channel: event.channel,
           thread_ts: event.ts,
