@@ -6,4 +6,4 @@ export const client = new OpenRouter({
   apiKey: process.env.HACKCLUB_API_KEY,
   serverURL: "https://ai.hackclub.com/proxy/v1",
 });
-export const MODEL = "stealth/ox-alpha";
+export const MODEL = "openai/gpt-oss-120b:nitro";
