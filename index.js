@@ -29,6 +29,7 @@ app.command("/add-me-as-printer", async ({ command, ack, respond }) => {
 });
 
 app.event("message", async ({ event }) => {
+  console.log("LOG: message event", event);
   if (event.type == "message" && event.subtype == undefined) {
     const startms = process.hrtime.bigint()/1000000n;
     const response = await parseInfo(event.text);    
