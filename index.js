@@ -17,9 +17,15 @@ app.command("/add-me-as-printer", async ({ command, ack, respond }) => {
   console.log(command);
   await ack();
   const existingPrinter = db.data.printers.find(printer => printer.user_id === command.user_id);
-  db.data.printers.push({ user_id: command.user_id, region: command.text });
-  await db.write();
-  console.log(`Added ${command.user_id} as a printer.`);
+  if (existingPrinter) {
+    existingPrinter.region = command.text;
+    await db.write();
+    console.log(`Updated ${command.user_id}'s printer region to "${command.text}".`);
+  } else {
+    db.data.printers.push({ user_id: command.user_id, region: command.text });
+    await db.write();
+    console.log(`Added ${command.user_id} as a printer.`);
+  }
   const latency = Date.now() - start;
   const text = existingPrinter ? `Updated your printer region to "${command.text}".\nLatency: ${latency}ms` : `Added you as a printer with region "${command.text}".
 Run again to update region.
