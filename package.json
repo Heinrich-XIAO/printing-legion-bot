@@ -4,7 +4,8 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "nodemon --watch . --ext js --exec node index.js"
+    "dev": "nodemon --watch . --ext js --exec node index.js",
+    "start": "node index.js"
   },
   "dependencies": {
     "@openrouter/sdk": "^1.2.51",
