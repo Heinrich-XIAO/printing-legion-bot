@@ -1,8 +1,16 @@
 import { fileURLToPath } from "url";
 import { STLLoader } from "three/examples/jsm/loaders/STLLoader.js";
 import occtimportjs from "occt-import-js";
+import { config } from "dotenv";
+
+config();
 
 let occtPromise;
+
+const headers = {
+  Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
+  Accept: "application/vnd.github+json",
+};
 
 function getOCCT() {
   if (!occtPromise) {
@@ -20,13 +28,13 @@ async function getSTLFiles(repoUrl) {
     .split("/");
 
   const repoInfo = await fetch(
-    `https://api.github.com/repos/${owner}/${repo}`
+    `https://api.github.com/repos/${owner}/${repo}`, { headers }
   ).then(r => r.json());
 
   const branch = repoInfo.default_branch;
 
   const tree = await fetch(
-    `https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`
+    `https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`, { headers }
   ).then(r => r.json());
 
   if (!tree.tree) {
@@ -61,7 +69,7 @@ async function parseRepoInfo(repoUrl) {
     .split("/");
 
   const repoInfo = await fetch(
-    `https://api.github.com/repos/${owner}/${repo}`
+    `https://api.github.com/repos/${owner}/${repo}`, { headers }
   ).then(r => r.json());
 
   const branch = repoInfo.default_branch;
@@ -75,7 +83,7 @@ export async function get3DFileDimentions(repoUrl) {
   return await Promise.all(
     stlFiles.map(async (file) => {
       const fileUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${file.path}`;
-      const bufferFetch = await fetch(fileUrl);
+      const bufferFetch = await fetch(fileUrl, { headers });
       const buffer = await bufferFetch.arrayBuffer();
       // console.log(buffer)
       if (file.path.toLowerCase().endsWith(".stl")) {
