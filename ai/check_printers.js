@@ -1,5 +1,6 @@
 import { client, MODEL } from "./client.js";
 import { db } from "../db/database.js";
+import { get3DFileDimentions } from "../github/stl_parsing.js";
 
 export const checkPrinters = async (submission) => {
   const regions = db.data.printers.map(printer => printer.region);
@@ -39,6 +40,35 @@ export const checkPrinters = async (submission) => {
   });
   const booleans = await Promise.all(retried_promises);
   const closePrinters = db.data.printers.filter((printer, index) => booleans[index]);
-  const printerUserIds = closePrinters.map(printer => printer.user_id);
+  const printerFilters = db.data.printers.map(printer => printer.custom_filter);
+  // console.log(printerFilters);
+  const filteredPrinters = await Promise.all(
+    closePrinters.map(async printer => {
+    if (!printer.custom_filter || printer.custom_filter.length === 0) {
+      return printer;
+    }
+    // Ask AI if the submission matches the printer's filter while giving the AI the 3D file dimensions
+    const filter = printer.custom_filter;
+    const dimensions = get3DFileDimentions(submission.git_url);
+    const response = await client.chat.send({
+      chatRequest: {
+        model: MODEL,
+        messages: [
+          { role: "user", content: `Does the submission match this criteria: "${filter}"? If dimension requirements are provided, make sure that the optimal way of packing the 3D print files is used. If PCB files are included, or dimensions are duplicate, please ignore them. SUBMISSION: ${JSON.stringify(submission)} DIMENSIONS (in milimeters): ${JSON.stringify(dimensions)}. ANSWER "yes" OR "no".` }
+        ],
+        stream: false,
+      }
+    });
+    // console.log(response)
+    const answer = response.choices[0].message.content.trim().toLowerCase();
+    // console.log(answer)
+    if (answer == "no") {
+      return null;
+    }
+    return printer;
+  })).then(results => results.filter(printer => printer !== null));
+  // console.log(filteredPrinters);
+  const printerUserIds = filteredPrinters.map(printer => printer.user_id);
+  // console.log(printerUserIds);
   return printerUserIds;  
 };

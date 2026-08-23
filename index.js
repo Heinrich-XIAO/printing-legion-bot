@@ -34,6 +34,30 @@ Latency: ${latency}ms`;
   await respond({ text });
 });
 
+app.command("/add-custom-filter", async ({ command, ack, respond }) => {
+  const start = Date.now();
+  console.log(command);
+  await ack();
+  const printer = db.data.printers.find(printer => printer.user_id === command.user_id);
+  if (!printer) {
+    await respond({ text: "You are not registered as a printer. Use /add-me-as-printer to register." });
+    return;
+  }
+  const existingFilter = printer.custom_filter;
+  if (existingFilter) {
+    existingFilter.value = command.text;
+    await db.write();
+    console.log(`Updated ${command.user_id}'s custom filter to "${command.text}".`);
+  } else {
+    printer.custom_filter = command.text;
+    await db.write();
+    console.log(`Added ${command.user_id} as a custom filter with filter "${command.text}".`);
+  }
+  const latency = Date.now() - start;
+  const text = existingFilter ? `Updated your custom filter to "${command.text}".\nLatency: ${latency}ms` : `Added you as a custom filter with filter "${command.text}".\nRun again to update filter.\nLatency: ${latency}ms`;
+  await respond({ text });
+});
+
 app.command("/update-filament-stock", async ({ command, ack, respond }) => {
   const start = Date.now();
   console.log(command);
