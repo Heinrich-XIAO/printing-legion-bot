@@ -9,7 +9,7 @@ export const checkPrinters = async (submission) => {
       chatRequest: {
         model: MODEL,
         messages: [
-          { role: "user", content: `Is the region "${region}" close to the region "${submission.location.state_province}, ${submission.location.country}"? Answer with "yes" or "no".` }
+          { role: "user", content: `Is the region "${region}" close to the region "${submission.location.state_province}, ${submission.location.country}"? Do not answer yes if countries don't overlap. Eg. If the first region is "Quebec, Canada" and the second region is "New York, USA", the answer should be "no", but "Quebec, Canada" and "Vancouver, Canada" should be "yes". Answer with "yes" or "no".` }
         ],
         stream: false,
       }
