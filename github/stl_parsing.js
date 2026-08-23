@@ -152,7 +152,7 @@ export async function get3DFileDimentions(repoUrl) {
         }
 
         return {
-          file_name: file.path,
+          path: file.path,
           dimensions: {
             w: maxX - minX,
             h: maxY - minY,
