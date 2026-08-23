@@ -45,7 +45,7 @@ app.command("/add-custom-filter", async ({ command, ack, respond }) => {
   }
   const existingFilter = printer.custom_filter;
   if (existingFilter) {
-    existingFilter.value = command.text;
+    existingFilter = command.text;
     await db.write();
     console.log(`Updated ${command.user_id}'s custom filter to "${command.text}".`);
   } else {
