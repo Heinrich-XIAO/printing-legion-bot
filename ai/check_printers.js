@@ -49,26 +49,28 @@ export const checkPrinters = async (submission) => {
     }
     // Ask AI if the submission matches the printer's filter while giving the AI the 3D file dimensions
     const filter = printer.custom_filter;
-    const dimensions = get3DFileDimentions(submission.git_url);
+    const dimensions = await get3DFileDimentions(submission.git_url);
+    const message = `Does the submission match this criteria: "${filter}"? If dimension requirements are provided, make sure that the optimal way of packing the 3D print files is used. If PCB files are included, or dimensions are duplicate, please ignore them. SUBMISSION: ${JSON.stringify(submission)} DIMENSIONS (in milimeters): ${JSON.stringify(dimensions)}. ANSWER "yes" OR "no".`
+    console.log(message)
     const response = await client.chat.send({
       chatRequest: {
         model: MODEL,
         messages: [
-          { role: "user", content: `Does the submission match this criteria: "${filter}"? If dimension requirements are provided, make sure that the optimal way of packing the 3D print files is used. If PCB files are included, or dimensions are duplicate, please ignore them. SUBMISSION: ${JSON.stringify(submission)} DIMENSIONS (in milimeters): ${JSON.stringify(dimensions)}. ANSWER "yes" OR "no".` }
+          { role: "user", content: message }
         ],
         stream: false,
       }
     });
     // console.log(response)
     const answer = response.choices[0].message.content.trim().toLowerCase();
-    // console.log(answer)
+    console.log(answer)
     if (answer == "no") {
       return null;
     }
     return printer;
   })).then(results => results.filter(printer => printer !== null));
-  // console.log(filteredPrinters);
+  console.log(filteredPrinters);
   const printerUserIds = filteredPrinters.map(printer => printer.user_id);
-  // console.log(printerUserIds);
+  console.log(printerUserIds);
   return printerUserIds;  
 };

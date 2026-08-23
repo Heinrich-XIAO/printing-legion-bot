@@ -80,7 +80,7 @@ async function parseRepoInfo(repoUrl) {
 export async function get3DFileDimentions(repoUrl) {
   const stlFiles = await getSTLFiles(repoUrl);
   const { owner, repo, branch } = await parseRepoInfo(repoUrl);
-  return await Promise.all(
+  const dimensions = await Promise.all(
     stlFiles.map(async (file) => {
       const fileUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${file.path}`;
       const bufferFetch = await fetch(fileUrl, { headers });
@@ -162,6 +162,8 @@ export async function get3DFileDimentions(repoUrl) {
 
       }
     }));
+  console.log(dimensions);
+  return dimensions;
 }
 
 if (fileURLToPath(import.meta.url) === process.argv[1]) {
