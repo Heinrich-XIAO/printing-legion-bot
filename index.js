@@ -94,8 +94,8 @@ app.event("message", async ({ event }) => {
       console.log(`Submission parsed and added to database in ${time}ms`);
       const printers = await checkPrinters(parsedJSON);
       if (printers.length > 0) {
-        const printer = db.data.printers.find(printer => printer.user_id === printers[0]);
-        const pingText = printers.map(user_id => printer.filament_stock ? `<@${user_id}> (${printer.filament_stock})` : `<@${user_id}>`).join(" ");
+        const printers = db.data.printers.filter(printer => printers.includes(printer.user_id));
+        const pingText = printers.map((user_id, index) => printers[index].filament_stock ? `<@${user_id}> (${printers[index].filament_stock})` : `<@${user_id}>`).join(" ");
         await app.client.chat.postMessage({
           channel: event.channel,
           thread_ts: event.ts,
