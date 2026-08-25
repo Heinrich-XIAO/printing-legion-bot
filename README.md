@@ -16,6 +16,6 @@ This is useful for limiting to cheap-to-ship items as many low cost carriers hav
 This is a command that allows you to customize a string that goes after your username when you're pinged for a request. This is usually a list of filaments that you have.
 
 ## Testing
-When testing, use a real github URL, or else, it will ignore your request as it is necessary to fetch the STL/STEP file dimensions as it is not know whether or not that is necessary.
+When testing, use a real github URL, or else, something bad will happen. The link is used to fetch the STL and STEP files to get their bounding boxes, but if the link is wrong, it assumes that the request was malformed.
 
-Do not test with duplicate git urls, otherwise, it will be flagged and ignored as spam.
+Make sure to include all necessary information such as project name, github link, area (city/state/province AND country), filament type and colour, and ysws.
