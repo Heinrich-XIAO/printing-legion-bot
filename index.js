@@ -98,6 +98,7 @@ app.event("message", async ({ event }) => {
       await db.write();
       console.log(`Submission parsed and added to database in ${time}ms`);
       const printerIds = await checkPrinters(parsedJSON);
+      console.log(`Printer IDs: ${printerIds}`);
       if (printerIds.length > 0) {
         const printers = db.data.printers.filter(printer =>
           printerIds.includes(printer.user_id)
