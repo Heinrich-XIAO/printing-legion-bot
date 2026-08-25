@@ -90,7 +90,7 @@ app.event("message", async ({ event }) => {
         await app.client.chat.postMessage({
           channel: event.channel,
           thread_ts: event.ts,
-          text: `Duplicate submission found for git_url: ${parsedJSON.git_url}`,
+          text: `Duplicate submission found for git_url: ${parsedJSON.git_url} processing anyway...`,
         });
         // return;
       }
