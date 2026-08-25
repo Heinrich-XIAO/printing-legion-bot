@@ -92,7 +92,7 @@ app.event("message", async ({ event }) => {
           thread_ts: event.ts,
           text: `Duplicate submission found for git_url: ${parsedJSON.git_url}`,
         });
-        return;
+        // return;
       }
       db.data.submissions.push(parsedJSON);
       await db.write();
