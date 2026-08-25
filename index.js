@@ -87,6 +87,11 @@ app.event("message", async ({ event }) => {
       const duplicate = db.data.submissions.find(submission => submission.git_url === parsedJSON.git_url);
       if (duplicate) {
         console.log(`Duplicate submission found for git_url: ${parsedJSON.git_url} in ${time}ms`);
+        await app.client.chat.postMessage({
+          channel: event.channel,
+          thread_ts: event.ts,
+          text: `Duplicate submission found for git_url: ${parsedJSON.git_url}`,
+        });
         return;
       }
       db.data.submissions.push(parsedJSON);
