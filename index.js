@@ -75,8 +75,8 @@ app.command("/update-filament-stock", async ({ command, ack, respond }) => {
 });
 
 app.event("message", async ({ event }) => {
-  console.log("LOG: message event", event);
   if (event.type == "message" && event.subtype == undefined && !event.thread_ts && !event.bot_id) {
+    console.log("LOG: message event", event);
     const startms = process.hrtime.bigint()/1000000n;
     const response = await parseInfo(event.text);    
     const endms = process.hrtime.bigint()/1000000n;
