@@ -105,7 +105,6 @@ app.event("message", async ({ event }) => {
         );
         console.log(printers);
         for (const printer of printers) {
-          const dm = await app.client.conversations.open({ users: printer.user_id });
           const transitionNotice = printer.dm_migration_notified
             ? ""
             : "We're moving printer notifications to DMs to avoid pinging you for every message in a request thread. Future printer matches will be sent here instead.\n\n";
@@ -113,13 +112,41 @@ app.event("message", async ({ event }) => {
             ? `Your listed filament stock: ${printer.filament_stock}\n\n`
             : "";
           const text = `${transitionNotice}A new printing request matches your printer profile:\n\nProject: ${parsedJSON.project_name}\nLocation: ${parsedJSON.location.state_province}, ${parsedJSON.location.country}\nFilament requested: ${parsedJSON.filament}\nYSWS: ${parsedJSON.ysws}\nRepository: ${parsedJSON.git_url}\n\n${stock}`;
-          await app.client.chat.postMessage({
-            channel: dm.channel.id,
-            text,
-          });
-          if (!printer.dm_migration_notified) {
+          let delivered = false;
+          try {
+            const dm = await app.client.conversations.open({ users: printer.user_id });
+            await app.client.chat.postMessage({
+              channel: dm.channel.id,
+              text,
+            });
+            delivered = true;
+          } catch (error) {
+            const reason = error.data?.error ?? error.message ?? String(error);
+            console.warn(`WARN: Could not DM printer ${printer.user_id} (${reason}); falling back to the request thread.`);
+            try {
+              const fallbackTransitionNotice = printer.dm_migration_notified
+                ? ""
+                : "We're moving printer notifications from request threads to DMs to avoid pinging you for every message. If a DM can't be delivered, we'll notify you in the request thread instead.\n\n";
+              const fallbackText = text.replace(transitionNotice, fallbackTransitionNotice);
+              await app.client.chat.postMessage({
+                channel: event.channel,
+                thread_ts: event.ts,
+                text: `<@${printer.user_id}> I couldn't send this as a DM, so here's the request notification in the thread instead.\n\n${fallbackText}`,
+              });
+              delivered = true;
+            } catch (fallbackError) {
+              const fallbackReason = fallbackError.data?.error ?? fallbackError.message ?? String(fallbackError);
+              console.warn(`WARN: Could not post the fallback thread notification for printer ${printer.user_id} (${fallbackReason}).`);
+            }
+          }
+          if (delivered && !printer.dm_migration_notified) {
             printer.dm_migration_notified = true;
-            await db.write();
+            try {
+              await db.write();
+            } catch (error) {
+              printer.dm_migration_notified = false;
+              console.warn(`WARN: Could not save the DM migration notice status for printer ${printer.user_id}: ${error.message ?? error}`);
+            }
           }
         }
       }
