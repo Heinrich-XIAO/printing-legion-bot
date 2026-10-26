@@ -107,7 +107,7 @@ app.event("message", async ({ event }) => {
         for (const printer of printers) {
           const transitionNotice = printer.dm_migration_notified
             ? ""
-            : "We're moving printer notifications to DMs to avoid pinging you for every message in a request thread. Future printer matches will be sent here instead.\n\n";
+            : "We're moving printer notifications to DMs to avoid getting pinged for every message in a request thread. Future printer matches will be sent here instead. For bug reports, email heinrichfromtweetor@gmail.com, or DM <@U08PY1XE5EE> on Slack.\n\n";
           const stock = printer.filament_stock
             ? `Your listed filament stock: ${printer.filament_stock}\n\n`
             : "";
@@ -126,7 +126,7 @@ app.event("message", async ({ event }) => {
             try {
               const fallbackTransitionNotice = printer.dm_migration_notified
                 ? ""
-                : "We're moving printer notifications from request threads to DMs to avoid pinging you for every message. If a DM can't be delivered, we'll notify you in the request thread instead.\n\n";
+                : "We're moving printer notifications to DMs to avoid getting pinged for every message in a request thread. Future printer matches will be sent here instead. For bug reports, email heinrichfromtweetor@gmail.com, or DM <@U08PY1XE5EE> on Slack.\n\n";
               const fallbackText = text.replace(transitionNotice, fallbackTransitionNotice);
               await app.client.chat.postMessage({
                 channel: event.channel,
