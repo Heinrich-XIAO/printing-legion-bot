@@ -22,7 +22,7 @@ app.command("/add-me-as-printer", async ({ command, ack, respond }) => {
     await db.write();
     console.log(`Updated ${command.user_id}'s printer region to "${command.text}".`);
   } else {
-    db.data.printers.push({ user_id: command.user_id, region: command.text });
+    db.data.printers.push({ user_id: command.user_id, region: command.text, dm_migration_notified: true });
     await db.write();
     console.log(`Added ${command.user_id} as a printer.`);
   }
@@ -104,18 +104,51 @@ app.event("message", async ({ event }) => {
           printerIds.includes(printer.user_id)
         );
         console.log(printers);
-        const pingText = printers
-          .map(printer =>
-            printer.filament_stock
-              ? `<@${printer.user_id}> (${printer.filament_stock})`
-              : `<@${printer.user_id}>`
-          )
-          .join(" ");
-        await app.client.chat.postMessage({
-          channel: event.channel,
-          thread_ts: event.ts,
-          text: `These printers are close to the location: ${pingText}`,
-        });
+        for (const printer of printers) {
+          const transitionNotice = printer.dm_migration_notified
+            ? ""
+            : "We're moving printer notifications to DMs to avoid getting pinged for every message in a request thread. Future printer matches will be sent here instead. For bug reports or other feedback, email heinrichfromtweetor@gmail.com, or DM <@U08PY1XE5EE> on Slack.\n\n";
+          const stock = printer.filament_stock
+            ? `Your listed filament stock: ${printer.filament_stock}\n\n`
+            : "";
+          const text = `${transitionNotice}A new printing request matches your printer profile:\n\nProject: ${parsedJSON.project_name}\nLocation: ${parsedJSON.location.state_province}, ${parsedJSON.location.country}\nFilament requested: ${parsedJSON.filament}\nYSWS: ${parsedJSON.ysws}\nRepository: ${parsedJSON.git_url}\n\n${stock}`;
+          let delivered = false;
+          try {
+            const dm = await app.client.conversations.open({ users: printer.user_id });
+            await app.client.chat.postMessage({
+              channel: dm.channel.id,
+              text,
+            });
+            delivered = true;
+          } catch (error) {
+            const reason = error.data?.error ?? error.message ?? String(error);
+            console.warn(`WARN: Could not DM printer ${printer.user_id} (${reason}); falling back to the request thread.`);
+            try {
+              const fallbackTransitionNotice = printer.dm_migration_notified
+                ? ""
+                : "We're moving printer notifications to DMs to avoid getting pinged for every message in a request thread. Future printer matches will be sent here instead. For bug reports or other feedback, email heinrichfromtweetor@gmail.com, or DM <@U08PY1XE5EE> on Slack.\n\n";
+              const fallbackText = text.replace(transitionNotice, fallbackTransitionNotice);
+              await app.client.chat.postMessage({
+                channel: event.channel,
+                thread_ts: event.ts,
+                text: `<@${printer.user_id}> I couldn't send this as a DM, so here's the request notification in the thread instead.\n\n${fallbackText}`,
+              });
+              delivered = true;
+            } catch (fallbackError) {
+              const fallbackReason = fallbackError.data?.error ?? fallbackError.message ?? String(fallbackError);
+              console.warn(`WARN: Could not post the fallback thread notification for printer ${printer.user_id} (${fallbackReason}).`);
+            }
+          }
+          if (delivered && !printer.dm_migration_notified) {
+            printer.dm_migration_notified = true;
+            try {
+              await db.write();
+            } catch (error) {
+              printer.dm_migration_notified = false;
+              console.warn(`WARN: Could not save the DM migration notice status for printer ${printer.user_id}: ${error.message ?? error}`);
+            }
+          }
+        }
       }
       return
     } else {
