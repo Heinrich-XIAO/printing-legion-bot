@@ -108,12 +108,11 @@ app.event("message", async ({ event }) => {
           const transitionNotice = printer.dm_migration_notified
             ? ""
             : "We're moving printer notifications to DMs to avoid getting pinged for every message in a request thread. Future printer matches will be sent here instead. For bug reports or other feedback, email heinrichfromtweetor@gmail.com, or DM <@U08PY1XE5EE> on Slack.\n\n";
-          const stock = printer.filament_stock
-            ? `Your listed filament stock: ${printer.filament_stock}\n\n`
-            : "";
-          const text = `${transitionNotice}A new printing request matches your printer profile:\n\nProject: ${parsedJSON.project_name}\nLocation: ${parsedJSON.location.state_province}, ${parsedJSON.location.country}\nFilament requested: ${parsedJSON.filament}\nYSWS: ${parsedJSON.ysws}\nRepository: ${parsedJSON.git_url}\n\n${stock}`;
+          let text = `${transitionNotice}A new printing request matches your printer profile.`;
           let delivered = false;
           try {
+            const permalink = await app.client.chat.getPermalink({ channel: event.channel, message_ts: event.ts });
+            text += `\n${permalink.permalink}`;
             const dm = await app.client.conversations.open({ users: printer.user_id });
             await app.client.chat.postMessage({
               channel: dm.channel.id,
@@ -122,7 +121,7 @@ app.event("message", async ({ event }) => {
             delivered = true;
           } catch (error) {
             const reason = error.data?.error ?? error.message ?? String(error);
-            console.warn(`WARN: Could not DM printer ${printer.user_id} (${reason}); falling back to the request thread.`);
+            console.warn(`WARN: Could not prepare or send the DM for printer ${printer.user_id} (${reason}); falling back to the request thread.`);
             try {
               const fallbackTransitionNotice = printer.dm_migration_notified
                 ? ""
