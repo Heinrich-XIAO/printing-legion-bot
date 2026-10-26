@@ -74,7 +74,10 @@ app.command("/update-filament-stock", async ({ command, ack, respond }) => {
   await respond({ text: `Updated your filament stock to "${command.text}".\nLatency: ${latency}ms` });
 });
 
+const TARGET_CHANNEL = "C083P4FJM46";
+
 app.event("message", async ({ event }) => {
+  if (event.channel !== TARGET_CHANNEL) return;
   if (event.type == "message" && event.subtype == undefined && !event.thread_ts && !event.bot_id) {
     console.log("LOG: message event", event);
     const startms = process.hrtime.bigint()/1000000n;
