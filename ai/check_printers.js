@@ -9,7 +9,7 @@ export const checkPrinters = async (submission) => {
       chatRequest: {
         model: MODEL,
         messages: [
-          { role: "user", content: `Is the region "${region}" close to the region "${submission.location.state_province}, ${submission.location.country}"? Do not answer yes if countries don't overlap. Eg. If the first region is "Quebec, Canada" and the second region is "New York, USA", the answer should be "no", but "Quebec, Canada" and "Vancouver, Canada" should be "yes". Answer with "yes" or "no".` }
+          { role: "user", content: `Is the location "${submission.location.state_province}, ${submission.location.country}" in the region "${region}"? Do not answer yes if countries don't overlap. Eg. If the region is "Quebec, Canada" and the location is "New York, USA", the answer should be "no", but if the region is "Quebec, Canada" and the location is "Quebec, Canada", the answer should be "yes". Answer with "yes" or "no".` }
         ],
         stream: false,
       }
@@ -25,7 +25,7 @@ export const checkPrinters = async (submission) => {
         chatRequest: {
           model: MODEL,
           messages: [
-            { role: "user", content: `The previous answer was "${answer}". Please answer with "yes" or "no". Is the region "${region}" close to the region "${submission.location.state_province}, ${submission.location.country}"?` }
+            { role: "user", content: `The previous answer was "${answer}". Please answer with "yes" or "no". Is the location "${submission.location.state_province}, ${submission.location.country}" in the region "${region}"?` }
           ],
           stream: false,
         }
